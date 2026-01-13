@@ -39,9 +39,13 @@ function renderCart(cart) {
 					${item.product.title}
 				</span>
 
-				<span class="cart-item-quantity">
-					x ${item.quantity}
-				</span>
+					<div class="cart-item-quantity">
+						<button data-id="${item.product.id}" class="quantity-btn minus-btn">−</button>
+							<span>
+								${item.quantity}
+							</span>
+						<button data-id="${item.product.id}" class="quantity-btn plus-btn">+</button>
+					</div>
 
 				<span class="cart-item-price">
 					${(item.product.price * item.quantity).toLocaleString('ru-RU')} ₽
@@ -78,4 +82,37 @@ productsContainer.addEventListener('click', (event) => {
 	saveCart(cart);
 	updateCartTotal(cart);
 	renderCart(cart);
+});
+
+
+cartItemsContainer.addEventListener('click', (event) => {
+	const target = event.target;
+
+	if (target.classList.contains('plus-btn')) {
+		const id = Number(target.dataset.id);
+		const cartItem = cart.find(item => item.product.id === id);
+
+		cartItem.quantity++;
+
+		saveCart(cart);
+		renderCart(cart);
+		updateCartTotal(cart);
+		return;
+	}
+
+	if (target.classList.contains('minus-btn')) {
+		const id = Number(target.dataset.id);
+		const cartItem = cart.find(item => item.product.id === id);
+
+		if (cartItem.quantity === 1) {
+			cart.splice(cart.indexOf(cartItem), 1);
+		} else {
+			cartItem.quantity--;
+		}
+
+		saveCart(cart);
+		renderCart(cart);
+		updateCartTotal(cart);
+		return;
+	}
 });
