@@ -4,39 +4,80 @@ import { createCartModal } from './components/CartModal.js';
 
 /*
 	===== DOM-элементы страницы =====
-	Здесь только то, что реально существует в index.html
 */
 const productsContainer = document.getElementById('products');
 const openCartBtn = document.getElementById('open-cart-btn');
 const cartCountElement = document.getElementById('cart-count');
+const sortSelect = document.getElementById('sortSelect');
 
 /*
 	===== Состояние корзины =====
-	Загружаем корзину из localStorage.
-	Если там ничего нет — начинаем с пустого массива.
 */
 const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
 /*
-	При загрузке страницы обновляем только счётчик товаров,
-	сама корзина рендерится ТОЛЬКО при открытии модалки.
+	===== Рендер товаров (ЕДИНАЯ ФУНКЦИЯ) =====
 */
-updateCartCount(cart);
+function renderProducts(productsArray) {
+	productsContainer.innerHTML = productsArray
+		.map(product => createProductCard(product))
+		.join('');
+}
 
 /*
-	===== Рендер списка товаров =====
-	Генерируем HTML карточек товаров и вставляем на страницу.
+	При загрузке страницы:
+	– обновляем счётчик
+	– рендерим товары
 */
-productsContainer.innerHTML = products
-	.map(product => createProductCard(product))
-	.join('');
+updateCartCount(cart);
+renderProducts(products);
+
+/*
+	===== Фильтрация и сортировка =====
+*/
+let currentCategory = 'all';
+
+const categoryButtons = document.querySelectorAll('.category-filters button');
+
+categoryButtons.forEach(button => {
+	button.addEventListener('click', () => {
+		currentCategory = button.dataset.category;
+
+		categoryButtons.forEach(btn => btn.classList.remove('active'));
+		button.classList.add('active');
+
+		applyFilters();
+	});
+});
+
+sortSelect.addEventListener('change', applyFilters);
+
+function applyFilters() {
+	let filteredProducts = [...products];
+
+	if (currentCategory !== 'all') {
+		filteredProducts = filteredProducts.filter(
+			product => product.category === currentCategory
+		);
+	}
+
+	switch (sortSelect.value) {
+		case 'price-asc':
+			filteredProducts.sort((a, b) => a.price - b.price);
+			break;
+		case 'price-desc':
+			filteredProducts.sort((a, b) => b.price - a.price);
+			break;
+		case 'rating-desc':
+			filteredProducts.sort((a, b) => b.rating - a.rating);
+			break;
+	}
+
+	renderProducts(filteredProducts);
+}
 
 /*
 	===== Вспомогательные функции =====
-*/
-
-/*
-	Считает общую стоимость корзины
 */
 function getCartTotal(cart) {
 	return cart.reduce((total, item) => {
@@ -44,34 +85,22 @@ function getCartTotal(cart) {
 	}, 0);
 }
 
-/*
-	Считает общее количество товаров в корзине
-	(сумма всех quantity)
-*/
 function getCartCount(cart) {
 	return cart.reduce((total, item) => {
 		return total + item.quantity;
 	}, 0);
 }
 
-/*
-	Обновляет счётчик 🛒 на странице
-*/
 function updateCartCount(cart) {
 	cartCountElement.textContent = getCartCount(cart);
 }
 
-/*
-	Сохраняет текущее состояние корзины в localStorage
-*/
 function saveCart(cart) {
 	localStorage.setItem('cart', JSON.stringify(cart));
 }
 
 /*
 	===== Рендер корзины =====
-	Функция универсальная — получает контейнер,
-	в который нужно отрисовать корзину.
 */
 function renderCart(cart, container) {
 	const cartFooter = document.querySelector('.cart-modal-footer');
@@ -106,15 +135,12 @@ function renderCart(cart, container) {
 	});
 }
 
-
 /*
 	===== Добавление товара в корзину =====
-	Используем делегирование событий на контейнере товаров
 */
 productsContainer.addEventListener('click', (event) => {
 	const button = event.target;
 
-	// Реагируем только на кнопку "Добавить в корзину"
 	if (!button.classList.contains('add-to-cart-btn')) return;
 
 	const productId = Number(button.dataset.id);
@@ -122,7 +148,6 @@ productsContainer.addEventListener('click', (event) => {
 
 	if (!product) return;
 
-	// Проверяем, есть ли уже такой товар в корзине
 	const cartItem = cart.find(item => item.product.id === product.id);
 
 	if (cartItem) {
@@ -138,24 +163,18 @@ productsContainer.addEventListener('click', (event) => {
 	updateCartCount(cart);
 });
 
-/*===== Очитска корзины =====*/
-
-
 /*
 	===== Открытие модального окна корзины =====
 */
 openCartBtn.addEventListener('click', () => {
-	// Создаём модалку и добавляем её в DOM
 	const modalWrapper = document.createElement('div');
 	modalWrapper.innerHTML = createCartModal();
 	document.body.appendChild(modalWrapper);
 
-	// Находим элементы внутри модалки
 	const cartItemsContainer = modalWrapper.querySelector('#cart-items');
 	const cartTotalElement = modalWrapper.querySelector('#cart-total');
 	const closeBtn = modalWrapper.querySelector('.cart-modal-close');
 	const modalOverlay = modalWrapper.querySelector('.cart-modal-overlay');
-
 
 	modalOverlay.addEventListener('click', (event) => {
 		if (event.target === modalOverlay) {
@@ -163,15 +182,9 @@ openCartBtn.addEventListener('click', () => {
 		}
 	});
 
-
-	// Отрисовываем корзину и сумму
 	renderCart(cart, cartItemsContainer);
 	cartTotalElement.textContent = getCartTotal(cart).toLocaleString('ru-RU');
 
-	/*
-		Управление количеством товаров в модалке
-		(+ / −)
-	*/
 	cartItemsContainer.addEventListener('click', (event) => {
 		const target = event.target;
 
@@ -200,23 +213,18 @@ openCartBtn.addEventListener('click', () => {
 		cartTotalElement.textContent = getCartTotal(cart).toLocaleString('ru-RU');
 	});
 
-	// Очистка корзины
 	const clearCartBtn = modalWrapper.querySelector('.clear-cart-btn');
 
 	clearCartBtn.addEventListener('click', () => {
-		cart.length = 0;              // очищаем массив
-		localStorage.removeItem('cart'); // чистим storage
+		cart.length = 0;
+		localStorage.removeItem('cart');
 
 		renderCart(cart, cartItemsContainer);
 		updateCartCount(cart);
-		updateCartTotal(cart);
+		cartTotalElement.textContent = '0';
 	});
 
-
-	// Закрытие модалки по кнопке "Х"
 	closeBtn.addEventListener('click', () => {
 		modalWrapper.remove();
 	});
-
 });
-

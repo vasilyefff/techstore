@@ -11,7 +11,33 @@
 <body>
 	<header class="header">
 		<h1>TechStore</h1>
+
+		<p class="store-description">
+			Лучший выбор техники • Быстрая доставка по всей России •
+			📞 +7 (900) 123-45-67
+		</p>
+
+		<!-- 👇 ВОТ ЭТОГО КОНТЕЙНЕРА НЕ ХВАТАЛО -->
+		<div class="controls">
+			<!-- СОРТИРОВКА СЛЕВА -->
+			<select id="sortSelect">
+				<option value="default">Без сортировки</option>
+				<option value="price-asc">Цена ↑</option>
+				<option value="price-desc">Цена ↓</option>
+				<option value="rating-desc">Рейтинг</option>
+			</select>
+
+			<!-- ФИЛЬТРЫ СПРАВА -->
+			<div class="category-filters">
+				<button data-category="all" class="active">Все</button>
+				<button data-category="Телефоны">Телефоны</button>
+				<button data-category="Ноутбуки">Ноутбуки</button>
+				<button data-category="Аксессуары">Аксессуары</button>
+				<button data-category="Мониторы">Мониторы</button>
+			</div>
+		</div>
 	</header>
+
 
 	<main class="container">
 
@@ -23,6 +49,10 @@
 
 		<div id="products"></div>
 	</main>
+
+	<footer class="footer">
+		<p>© 2026 TechStore. Все права защищены.</p>
+	</footer>
 
 	<script type="module" src="js/main.js"></script>
 </body>

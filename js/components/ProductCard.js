@@ -9,13 +9,18 @@ export function createProductCard(product) {
         class="product-image"
       />
 
-      <h3>${product.title}</h3>
+      <div class="product-meta">
+        <span class="product-category">${product.category}</span>
+        <span class="product-rating">⭐ ${product.rating}</span>
+      </div>
+
+      <h3 class="product-title">${product.title}</h3>
 
       <p class="product-price">
         ${product.price.toLocaleString('ru-RU')} ₽
       </p>
-			
-			<button 
+      
+      <button 
         class="add-to-cart-btn"
         data-id="${product.id}"
       >
