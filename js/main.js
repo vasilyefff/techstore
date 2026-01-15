@@ -22,21 +22,57 @@ function renderProducts(productsArray) {
 	productsContainer.innerHTML = productsArray
 		.map(product => createProductCard(product))
 		.join('');
+
+	// синхронизация кнопок с корзиной
+	document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+		const id = Number(button.dataset.id);
+		const cartItem = cart.find(item => item.product.id === id);
+		renderAddButton(button, cartItem);
+	});
 }
 
 /*
-	При загрузке страницы:
-	– обновляем счётчик
-	– рендерим товары
+	===== Вспомогательные функции =====
 */
-updateCartCount(cart);
-renderProducts(products);
+function getCartTotal(cart) {
+	return cart.reduce((total, item) => {
+		return total + item.product.price * item.quantity;
+	}, 0);
+}
+
+function getCartCount(cart) {
+	return cart.reduce((total, item) => {
+		return total + item.quantity;
+	}, 0);
+}
+
+function updateCartCount(cart) {
+	cartCountElement.textContent = getCartCount(cart);
+}
+
+function saveCart(cart) {
+	localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+function renderAddButton(button, cartItem) {
+	if (!cartItem) {
+		button.classList.remove('counter');
+		button.innerHTML = 'В корзину';
+		return;
+	}
+
+	button.classList.add('counter');
+	button.innerHTML = `
+		<button class="minus">−</button>
+		<span>${cartItem.quantity}</span>
+		<button class="plus">+</button>
+	`;
+}
 
 /*
 	===== Фильтрация и сортировка =====
 */
 let currentCategory = 'all';
-
 const categoryButtons = document.querySelectorAll('.category-filters button');
 
 categoryButtons.forEach(button => {
@@ -77,27 +113,40 @@ function applyFilters() {
 }
 
 /*
-	===== Вспомогательные функции =====
+	===== Добавление товара в корзину =====
 */
-function getCartTotal(cart) {
-	return cart.reduce((total, item) => {
-		return total + item.product.price * item.quantity;
-	}, 0);
-}
+productsContainer.addEventListener('click', (event) => {
+	const button = event.target.closest('.add-to-cart-btn');
+	if (!button) return;
 
-function getCartCount(cart) {
-	return cart.reduce((total, item) => {
-		return total + item.quantity;
-	}, 0);
-}
+	const productId = Number(button.dataset.id);
+	const product = products.find(p => p.id === productId);
+	if (!product) return;
 
-function updateCartCount(cart) {
-	cartCountElement.textContent = getCartCount(cart);
-}
+	let cartItem = cart.find(item => item.product.id === productId);
 
-function saveCart(cart) {
-	localStorage.setItem('cart', JSON.stringify(cart));
-}
+	if (event.target.classList.contains('plus')) {
+		cartItem.quantity++;
+	}
+	else if (event.target.classList.contains('minus')) {
+		if (cartItem.quantity === 1) {
+			cart.splice(cart.indexOf(cartItem), 1);
+			cartItem = null;
+		} else {
+			cartItem.quantity--;
+		}
+	}
+	else {
+		if (!cartItem) {
+			cartItem = { product, quantity: 1 };
+			cart.push(cartItem);
+		}
+	}
+
+	saveCart(cart);
+	updateCartCount(cart);
+	renderAddButton(button, cartItem);
+});
 
 /*
 	===== Рендер корзины =====
@@ -117,9 +166,7 @@ function renderCart(cart, container) {
 	cart.forEach(item => {
 		container.innerHTML += `
 			<div class="cart-item">
-				<span class="cart-item-title">
-					${item.product.title}
-				</span>
+				<span class="cart-item-title">${item.product.title}</span>
 
 				<div class="cart-item-quantity">
 					<button data-id="${item.product.id}" class="quantity-btn minus-btn">−</button>
@@ -134,34 +181,6 @@ function renderCart(cart, container) {
 		`;
 	});
 }
-
-/*
-	===== Добавление товара в корзину =====
-*/
-productsContainer.addEventListener('click', (event) => {
-	const button = event.target;
-
-	if (!button.classList.contains('add-to-cart-btn')) return;
-
-	const productId = Number(button.dataset.id);
-	const product = products.find(item => item.id === productId);
-
-	if (!product) return;
-
-	const cartItem = cart.find(item => item.product.id === product.id);
-
-	if (cartItem) {
-		cartItem.quantity++;
-	} else {
-		cart.push({
-			product,
-			quantity: 1,
-		});
-	}
-
-	saveCart(cart);
-	updateCartCount(cart);
-});
 
 /*
 	===== Открытие модального окна корзины =====
@@ -187,18 +206,13 @@ openCartBtn.addEventListener('click', () => {
 
 	cartItemsContainer.addEventListener('click', (event) => {
 		const target = event.target;
-
 		if (!target.classList.contains('quantity-btn')) return;
 
 		const id = Number(target.dataset.id);
 		const cartItem = cart.find(item => item.product.id === id);
-
 		if (!cartItem) return;
 
-		if (target.classList.contains('plus-btn')) {
-			cartItem.quantity++;
-		}
-
+		if (target.classList.contains('plus-btn')) cartItem.quantity++;
 		if (target.classList.contains('minus-btn')) {
 			if (cartItem.quantity === 1) {
 				cart.splice(cart.indexOf(cartItem), 1);
@@ -218,7 +232,6 @@ openCartBtn.addEventListener('click', () => {
 	clearCartBtn.addEventListener('click', () => {
 		cart.length = 0;
 		localStorage.removeItem('cart');
-
 		renderCart(cart, cartItemsContainer);
 		updateCartCount(cart);
 		cartTotalElement.textContent = '0';
@@ -228,3 +241,9 @@ openCartBtn.addEventListener('click', () => {
 		modalWrapper.remove();
 	});
 });
+
+/*
+	===== Инициализация =====
+*/
+updateCartCount(cart);
+renderProducts(products);

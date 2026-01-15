@@ -1,13 +1,18 @@
 export function createProductCard(product) {
-	const imagePath = `assets/images/${product.image}`;
+
+	const categoryEmojiMap = {
+		'Телефоны': '📱',
+		'Ноутбуки': '💻',
+		'Аксессуары': '🎧',
+		'Мониторы': '🖥️',
+	};
 
 	return `
     <div class="product-card">
-      <img 
-        src="${imagePath}" 
-        alt="${product.title}" 
-        class="product-image"
-      />
+     
+	    <div class="product-image">
+        ${categoryEmojiMap[product.category] || '📦'}
+      </div>
 
       <div class="product-meta">
         <span class="product-category">${product.category}</span>
