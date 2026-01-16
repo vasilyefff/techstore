@@ -7,8 +7,10 @@ import { createCartModal } from './components/CartModal.js';
 */
 const productsContainer = document.getElementById('products');
 const openCartBtn = document.getElementById('open-cart-btn');
+const themeToggleBtn = document.getElementById('theme-toggle');
 const cartCountElement = document.getElementById('cart-count');
 const sortSelect = document.getElementById('sortSelect');
+
 
 /*
 	===== Состояние корзины =====
@@ -68,6 +70,44 @@ function renderAddButton(button, cartItem) {
 		<button class="plus">+</button>
 	`;
 }
+
+/*
+	===== Тоггл смены светлой/тёмной темы =====
+*/
+
+function updateThemeIcon(isDark) {
+	const sun = themeToggleBtn.querySelector('.icon-sun');
+	const moon = themeToggleBtn.querySelector('.icon-moon');
+
+	if (isDark) {
+		sun.style.opacity = '1';
+		sun.style.transform = 'scale(1)';
+		moon.style.opacity = '0';
+		moon.style.transform = 'scale(0.5)';
+	} else {
+		sun.style.opacity = '0';
+		sun.style.transform = 'scale(0.5)';
+		moon.style.opacity = '1';
+		moon.style.transform = 'scale(1)';
+	}
+}
+
+const savedTheme = localStorage.getItem('theme');
+
+if (savedTheme === 'dark') {
+	document.body.classList.add('dark');
+	updateThemeIcon(true);
+} else {
+	updateThemeIcon(false);
+}
+
+themeToggleBtn.addEventListener('click', () => {
+	const isDark = document.body.classList.toggle('dark');
+
+	updateThemeIcon(isDark);
+	localStorage.setItem('theme', isDark ? 'dark' : 'light');
+});
+
 
 /*
 	===== Фильтрация и сортировка =====
